@@ -1,0 +1,390 @@
+{
+  "name": "code-runner-frp",
+  "displayName": "Code Runner",
+  "description": "Run C, C++, Java, JS, PHP, Python, Perl, Ruby, Go, Lua, Groovy, PowerShell, CMD, BASH, F#, C#, VBScript, TypeScript, CoffeeScript, Scala, Swift, Julia, Crystal, OCaml, R, AppleScript, Elixir, VB.NET, Clojure, Haxe, Obj-C, Rust, Racket, AutoHotkey, AutoIt, Kotlin, Dart, Pascal, Haskell, Nim, D, Lisp, Kit",
+  "version": "0.9.11",
+  "publisher": "koios-sh",
+  "icon": "images/logo.png",
+  "engines": {
+    "vscode": "^1.35.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "javascript",
+    "php",
+    "python",
+    "perl",
+    "ruby",
+    "multi-root ready"
+  ],
+  "bugs": {
+    "url": "https://github.com/koios-sh/vscode-code-runner-frp/issues",
+    "email": "hi@koios.cn"
+  },
+  "homepage": "https://github.com/koios-sh/vscode-code-runner-frp/blob/master/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/koios-sh/vscode-code-runner-frp.git"
+  },
+  "activationEvents": [
+    "onCommand:code-runner-frp.run",
+    "onCommand:code-runner-frp.runCustomCommand",
+    "onCommand:code-runner-frp.runByLanguage",
+    "onCommand:code-runner-frp.runOrStop"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-runner-frp.run",
+        "title": "Run Code Now"
+      },
+      {
+        "command": "code-runner-frp.runCustomCommand",
+        "title": "Run Custom Command"
+      },
+      {
+        "command": "code-runner-frp.runByLanguage",
+        "title": "Run By Language"
+      },
+      {
+        "command": "code-runner-frp.stop",
+        "title": "Stop Code Run"
+      },
+      {
+        "command": "code-runner-frp.runOrStop",
+        "title": "Run/Stop Code Run",
+        "icon": {
+          "light": "./images/run-stop-light.png",
+          "dark": "./images/run-stop-dark.png"
+        }
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "code-runner-frp.run",
+        "key": "ctrl+alt+n"
+      },
+      {
+        "command": "code-runner-frp.runCustomCommand",
+        "key": "ctrl+alt+k"
+      },
+      {
+        "command": "code-runner-frp.runByLanguage",
+        "key": "ctrl+alt+j"
+      },
+      {
+        "command": "code-runner-frp.stop",
+        "key": "ctrl+alt+m"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "!inOutput && config.code-runner-frp.showRunCommandInEditorContextMenu",
+          "command": "code-runner-frp.run",
+          "group": "navigation"
+        },
+        {
+          "when": "inOutput && !config.code-runner-frp.runInTerminal",
+          "command": "code-runner-frp.stop",
+          "group": "stop-code-run"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "!inOutput && config.code-runner-frp.showRunIconInEditorTitleMenu",
+          "command": "code-runner-frp.runOrStop",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "!explorerResourceIsFolder && config.code-runner-frp.showRunCommandInExplorerContextMenu",
+          "command": "code-runner-frp.run",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "Run Code configuration",
+      "properties": {
+        "code-runner-frp.executorMapByGlob": {
+          "type": "object",
+          "default": {
+            "pom.xml": "cd $dir && mvn clean package"
+          },
+          "description": "Set the executor by glob.",
+          "scope": "resource"
+        },
+        "code-runner-frp.executorMap": {
+          "type": "object",
+          "default": {
+            "javascript": "node",
+            "java": "cd $dir && javac $fileName && java $fileNameWithoutExt",
+            "c": "cd $dir && gcc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+            "cpp": "cd $dir && g++ $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+            "objective-c": "cd $dir && gcc -framework Cocoa $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+            "php": "php",
+            "python": "python -u",
+            "perl": "perl",
+            "perl6": "perl6",
+            "ruby": "ruby",
+            "go": "go run",
+            "lua": "lua",
+            "groovy": "groovy",
+            "powershell": "powershell -ExecutionPolicy ByPass -File",
+            "bat": "cmd /c",
+            "shellscript": "bash",
+            "fsharp": "fsi",
+            "csharp": "scriptcs",
+            "vbscript": "cscript //Nologo",
+            "typescript": "ts-node",
+            "coffeescript": "coffee",
+            "scala": "scala",
+            "swift": "swift",
+            "julia": "julia",
+            "crystal": "crystal",
+            "ocaml": "ocaml",
+            "r": "Rscript",
+            "applescript": "osascript",
+            "clojure": "lein exec",
+            "haxe": "haxe --cwd $dirWithoutTrailingSlash --run $fileNameWithoutExt",
+            "rust": "cd $dir && rustc $fileName && $dir$fileNameWithoutExt",
+            "racket": "racket",
+            "ahk": "autohotkey",
+            "autoit": "autoit3",
+            "dart": "dart",
+            "pascal": "cd $dir && fpc $fileName && $dir$fileNameWithoutExt",
+            "d": "cd $dir && dmd $fileName && $dir$fileNameWithoutExt",
+            "haskell": "runhaskell",
+            "nim": "nim compile --verbosity:0 --hints:off --run",
+            "lisp": "sbcl --script",
+            "kit": "kitc --run"
+          },
+          "description": "Set the executor of each language.",
+          "scope": "resource"
+        },
+        "code-runner-frp.executorMapByFileExtension": {
+          "type": "object",
+          "default": {
+            ".vb": "cd $dir && vbc /nologo $fileName && $dir$fileNameWithoutExt",
+            ".vbs": "cscript //Nologo",
+            ".scala": "scala",
+            ".jl": "julia",
+            ".cr": "crystal",
+            ".ml": "ocaml",
+            ".exs": "elixir",
+            ".hx": "haxe --cwd $dirWithoutTrailingSlash --run $fileNameWithoutExt",
+            ".rkt": "racket",
+            ".ahk": "autohotkey",
+            ".au3": "autoit3",
+            ".kt": "cd $dir && kotlinc $fileName -include-runtime -d $fileNameWithoutExt.jar && java -jar $fileNameWithoutExt.jar",
+            ".kts": "kotlinc -script",
+            ".dart": "dart",
+            ".pas": "cd $dir && fpc $fileName && $dir$fileNameWithoutExt",
+            ".pp": "cd $dir && fpc $fileName && $dir$fileNameWithoutExt",
+            ".d": "cd $dir && dmd $fileName && $dir$fileNameWithoutExt",
+            ".hs": "runhaskell",
+            ".nim": "nim compile --verbosity:0 --hints:off --run",
+            ".csproj": "dotnet run --project",
+            ".fsproj": "dotnet run --project",
+            ".lisp": "sbcl --script",
+            ".kit": "kitc --run"
+          },
+          "description": "Set the executor of each file extension.",
+          "scope": "resource"
+        },
+        "code-runner-frp.customCommand": {
+          "type": "string",
+          "default": "echo Hello",
+          "description": "Set the custom command to run.",
+          "scope": "resource"
+        },
+        "code-runner-frp.languageIdToFileExtensionMap": {
+          "type": "object",
+          "default": {
+            "bat": ".bat",
+            "powershell": ".ps1",
+            "typescript": ".ts"
+          },
+          "description": "Set the mapping of languageId to file extension.",
+          "scope": "resource"
+        },
+        "code-runner-frp.defaultLanguage": {
+          "type": "string",
+          "default": "",
+          "description": "Set the default language to run.",
+          "scope": "resource"
+        },
+        "code-runner-frp.cwd": {
+          "type": "string",
+          "default": "",
+          "description": "Set the working directory.",
+          "scope": "resource"
+        },
+        "code-runner-frp.fileDirectoryAsCwd": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to use the directory of the file to be executed as the working directory.",
+          "scope": "resource"
+        },
+        "code-runner-frp.clearPreviousOutput": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to clear previous output before each run.",
+          "scope": "resource"
+        },
+        "code-runner-frp.saveAllFilesBeforeRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to save all files before running.",
+          "scope": "resource"
+        },
+        "code-runner-frp.saveFileBeforeRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to save the current file before running.",
+          "scope": "resource"
+        },
+        "code-runner-frp.enableAppInsights": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to enable AppInsights to track user telemetry data.",
+          "scope": "resource"
+        },
+        "code-runner-frp.showExecutionMessage": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show extra execution message like [Running] ... and [Done] ...",
+          "scope": "resource"
+        },
+        "code-runner-frp.runInTerminal": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to run code in Integrated Terminal.",
+          "scope": "resource"
+        },
+        "code-runner-frp.terminalRoot": {
+          "type": "string",
+          "default": "",
+          "description": "For Windows system, replaces the Windows style drive letter in the command with a Unix style root when using a custom shell as the terminal, like Bash or Cgywin. Example: Setting this to '/mnt/' will replace 'C:\\path' with '/mnt/c/path'",
+          "scope": "resource"
+        },
+        "code-runner-frp.preserveFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to preserve focus on code editor after code run is triggered.",
+          "scope": "resource"
+        },
+        "code-runner-frp.ignoreSelection": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to ignore selection to always run entire file.",
+          "scope": "resource"
+        },
+        "code-runner-frp.showRunIconInEditorTitleMenu": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show 'Run Code' icon in editor title menu.",
+          "scope": "resource"
+        },
+        "code-runner-frp.showRunCommandInEditorContextMenu": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show 'Run Code' command in editor context menu.",
+          "scope": "resource"
+        },
+        "code-runner-frp.showRunCommandInExplorerContextMenu": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show 'Run Code' command in explorer context menu.",
+          "scope": "resource"
+        },
+        "code-runner-frp.temporaryFileName": {
+          "type": "string",
+          "default": "tempCodeRunnerFile",
+          "description": "Temporary file name used in running selected code snippet. When it is set as empty, the file name will be random.",
+          "scope": "resource"
+        },
+        "code-runner-frp.respectShebang": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to respect Shebang to run code.",
+          "scope": "resource"
+        },
+        "code-runner-frp.frpc_execution_path": {
+          "type": "string",
+          "default": "",
+          "description": "frp client executable file path",
+          "scope": "resource"
+        },
+        "code-runner-frp.frp_server_addr": {
+          "type": "string",
+          "default": "",
+          "description": "frp server ip address and port in form of ip:port",
+          "scope": "resource"
+        },
+        "code-runner-frp.frp_server_token": {
+          "type": "string",
+          "default": "",
+          "description": "frp服务器认证token，没有则留空",
+          "scope": "resource"
+        },
+        "code-runner-frp.frp_server_domain": {
+          "type": "string",
+          "default": "请设置你的frp服务器域名",
+          "description": "frp服务器域名",
+          "scope": "resource"
+        },
+        "code-runner-frp.frp_user": {
+          "type": "string",
+          "default": "请设置你的frp用户名",
+          "description": "frp用户名",
+          "scope": "resource"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "code-runner-frp-output",
+        "mimetypes": [
+          "text/x-code-output"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "code-runner-frp-output",
+        "scopeName": "code-runner-frp.output",
+        "path": "./syntaxes/code-runner-frp-output.tmLanguage"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "tslint": "tslint -t verbose src/**/*.ts"
+  },
+  "dependencies": {
+    "applicationinsights": "^0.19.0",
+    "is-wsl": "^2.1.0",
+    "micromatch": "^4.0.2",
+    "node-netstat": "github:koios-sh/node-netstat",
+    "tree-kill": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/micromatch": "^3.1.0",
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.40",
+    "mocha": "^6.1.4",
+    "tslint": "^5.5.0",
+    "typescript": "^2.0.3",
+    "vscode": "^1.1.34"
+  }
+}
