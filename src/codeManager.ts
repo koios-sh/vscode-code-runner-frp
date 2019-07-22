@@ -10,7 +10,7 @@ import netstat = require("node-netstat");
 const TmpDir = os.tmpdir();
 import util = require('util');
 
-const frpc_ini_template = "[common]\nserver_addr = %s\nserver_port = %s\ntoken = %s\npool_count = 5\nlog_file = ./frpc.log\ntcp_mux = true\nlogin_fail_exit = true\nprotocol = tcp\ntls_enable = true\nuser = %s\n[web]\ntype = http\nlocal_port = %s\nsubdomain = %s"
+const frpc_ini_template = "[common]\nserver_addr = %s\nserver_port = %s\ntoken = %s\npool_count = 5\nlog_file = ./frpc.log\n%s\ntcp_mux = true\nlogin_fail_exit = true\nprotocol = tcp\ntls_enable = true\nuser = %s\n[web]\ntype = http\nlocal_port = %s\nsubdomain = %s"
 
 export class CodeManager implements vscode.Disposable {
     private _outputChannel: vscode.OutputChannel;
@@ -487,6 +487,7 @@ export class CodeManager implements vscode.Disposable {
         const showExecutionMessage = this._config.get<boolean>("showExecutionMessage");
         this._outputChannel.show(this._config.get<boolean>("preserveFocus"));
         const exec = require("child_process").exec;
+        const psTree = require('ps-tree');
         const command = this.getFinalCommandToRunCodeFile(executor, appendFile);
         if (showExecutionMessage) {
             this._outputChannel.appendLine("[Running] " + command);
@@ -504,46 +505,60 @@ export class CodeManager implements vscode.Disposable {
         });
 
         let _this = this;
-        netstat({
-            sync: false,
-            watch: true,
-            filter: {
-                pid: this._process.pid,
-                state: 'LISTEN'
-            },
-            limit: 1
-        }, function (data) {
-            if (data.local.port > 0) {
-                const frp_server_addr = _this._config.get<string>("frp_server_addr").split(':');
-                const frp_server_token = _this._config.get<string>("frp_server_token");
-                const frpc_execution_path = _this._config.get<string>("frpc_execution_path");
-                const frp_server_domain = _this._config.get<string>("frp_server_domain");
-                const frp_user = _this._config.get<string>("frp_user");
-                if (frp_server_addr.length != 2 || parseInt(frp_server_addr[1]) < 80) {
-                    _this._outputChannel.append("frp_server_addr -> " + frp_server_addr.join(':') + " 格式不合法\n");
-                    return;
-                }
-                if (frpc_execution_path.length == 0 || !fs.existsSync(frpc_execution_path)) {
-                    _this._outputChannel.append("frpc_execution_path -> " + frpc_execution_path + " 文件不存在\n");
-                    return;
-                }
-                const folder = _this._document.isUntitled ? _this._cwd : dirname(_this._document.fileName);
-                var subdomain = folder.replace(/\//g, '-').replace(/\\/g, '-').replace(/:/g, '').replace(/\./g, '') + '-' + frp_user.replace(/_/g, '-');
-                if (subdomain.startsWith('-')) {
-                    subdomain = subdomain.slice(1);
-                }
-                const url = 'http://' + subdomain + '.' + frp_server_domain;
-                const frpc_ini = util.format(frpc_ini_template, frp_server_addr[0], frp_server_addr[1], frp_server_token, frp_user, data.local.port, subdomain);
+        psTree(this._process.pid, function (err, data) {
+            let pids = [_this._process.pid];
+            data.forEach(element => {
+                pids.push(parseInt(element.PID));
+            });
+            netstat({
+                sync: false,
+                watch: true,
+                watchTime: 60000,
+                filter: {
+                    pid: pids,
+                    state: 'LISTEN'
+                },
+                limit: 1
+            }, function (data) {
+                if (data.local.port > 0) {
+                    const frp_server_addr = _this._config.get<string>("frp_server_addr").split(':');
+                    const frp_server_token = _this._config.get<string>("frp_server_token");
+                    const frpc_execution_path = _this._config.get<string>("frpc_execution_path");
+                    const frp_server_domain = _this._config.get<string>("frp_server_domain");
+                    const frp_user = _this._config.get<string>("frp_user");
+                    const frp_client_admin = _this._config.get<boolean>("frp_client_admin") ? "admin_addr = 127.0.0.1\nadmin_port = 7400" : "";
+                    if (frp_server_addr.length != 2 || parseInt(frp_server_addr[1]) < 80) {
+                        _this._outputChannel.append("frp_server_addr -> " + frp_server_addr.join(':') + " 格式不合法\n");
+                        return;
+                    }
+                    if (frpc_execution_path.length == 0 || !fs.existsSync(frpc_execution_path)) {
+                        _this._outputChannel.append("frpc_execution_path -> " + frpc_execution_path + " 文件不存在\n");
+                        return;
+                    }
+                    const folder = _this._document.isUntitled ? _this._cwd : dirname(_this._document.fileName);
+                    var subdomain = folder.replace(/\//g, '-').replace(/\\/g, '-').replace(/:/g, '').replace(/\./g, '') + '-' + frp_user.replace(/_/g, '-');
+                    if (subdomain.startsWith('-')) {
+                        subdomain = subdomain.slice(1);
+                    }
+                    subdomain = subdomain.toLocaleLowerCase()
+                    const url = 'http://' + subdomain + '.' + frp_server_domain;
+                    const frpc_ini = util.format(frpc_ini_template, frp_server_addr[0], frp_server_addr[1], frp_server_token, frp_client_admin, frp_user, data.local.port, subdomain);
 
-                const frpcConfig = _this.createRandomFile(frpc_ini, folder, '.ini');
+                    const frpcConfig = _this.createRandomFile(frpc_ini, folder, '.ini');
 
-                _this._frpc = exec(frpc_execution_path + ' -c ' + frpcConfig, null, () => {
-                    fs.unlinkSync(frpcConfig);
-                });
+                    _this._frpc = exec(frpc_execution_path + ' -c ' + frpcConfig, null, () => {
+                        fs.unlinkSync(frpcConfig);
+                    });
 
-                _this._outputChannel.append("启动成功，请访问 " + url + " \n");
-            }
-            return false;
+                    _this._outputChannel.append("frpc 启动成功，请访问 " + url);
+                    _this._outputChannel.appendLine("")
+                    if (frp_client_admin.length != 0) {
+                        _this._outputChannel.append("frpc 客户端状态 http://127.0.0.1:7400");
+                        _this._outputChannel.appendLine("")
+                    }
+                }
+                return false;
+            });
         });
 
         this._process.on("close", (code) => {
@@ -552,7 +567,7 @@ export class CodeManager implements vscode.Disposable {
             const elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
             this._outputChannel.appendLine("");
             if (showExecutionMessage) {
-                this._outputChannel.appendLine("[Done] 1ted with code=" + code + " in " + elapsedTime + " seconds");
+                this._outputChannel.appendLine("[Done] exited with code=" + code + " in " + elapsedTime + " seconds");
                 this._outputChannel.appendLine("");
             }
             if (this._isTmpFile) {

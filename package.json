@@ -341,6 +341,12 @@
           "description": "frp服务器域名",
           "scope": "resource"
         },
+        "code-runner-frp.frp_client_admin": {
+          "type": "boolean",
+          "default": false,
+          "description": "frp客户端管理接口",
+          "scope": "resource"
+        },
         "code-runner-frp.frp_user": {
           "type": "string",
           "default": "请设置你的frp用户名",
@@ -373,16 +379,18 @@
   },
   "dependencies": {
     "applicationinsights": "^0.19.0",
+    "iconv-lite": "^0.5.0",
     "is-wsl": "^2.1.0",
     "micromatch": "^4.0.2",
     "node-netstat": "github:koios-sh/node-netstat",
+    "ps-tree": "^1.2.0",
     "tree-kill": "^1.1.0"
   },
   "devDependencies": {
     "@types/micromatch": "^3.1.0",
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "tslint": "^5.5.0",
     "typescript": "^2.0.3",
     "vscode": "^1.1.34"
